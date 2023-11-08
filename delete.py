@@ -4,7 +4,7 @@
 import os
 import json
 
-# Directory containing your images
+# Directory containing images
 image_directory = "peach"
 
 # Load annotations from the first JSON file
@@ -23,7 +23,7 @@ for document in data:
 for document in data_2:
     image_filenames.add(document["documents"][0]["name"])
 
-# Get a list of image filenames in the "peach" folder
+# Get a list of image filenames in the image folder
 all_images = os.listdir(image_directory)
 
 # Find images not mentioned in both JSON files
