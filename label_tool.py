@@ -4,7 +4,7 @@ from tkinter import simpledialog
 from PIL import Image, ImageTk
 
 # Initialize variables
-# Replace with the path to your image folder
+# Replace with the path to image folder
 image_folder = 'images'
 annotations = {}  # Dictionary to store annotations for each image
 drawing = False  # Flag for drawing bounding boxes
