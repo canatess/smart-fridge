@@ -11,7 +11,7 @@ import numpy as np
 with open("annotations.json", "r") as json_file:
     data = json.load(json_file)
 
-# Define the directory where your images are located
+# Define the directory where images are located
 image_directory = "peach"  # Change this to your image directory
 
 # Create a directory to store the mask images
@@ -47,7 +47,7 @@ for document in data:
                     # Add the "Mold" mask to the combined mask
                     combined_mask = cv2.add(combined_mask, mold_mask)
 
-    # Save the combined "Mold" mask image
+    # Save the combined "Mold" mask image ( For now not using this combined but when we need other classes suc has peach it will be useful)
     image_filename = os.path.splitext(document["documents"][0]["name"])[0]
     mask_filename = f"masks/{image_filename}.png"
     cv2.imwrite(mask_filename, combined_mask)
@@ -63,7 +63,7 @@ for document in data_2:
     image = cv2.imread(image_path)
     image_height, image_width, _ = image.shape
 
-    # Initialize a combined mask image for a different category (e.g., "NewCategory")
+    # Initialize a combined mask image
     combined_mask = np.zeros((image_height, image_width), dtype=np.uint8)
 
     for entity in document["annotation"]["annotationGroups"][0]["annotationEntities"]:
@@ -77,16 +77,14 @@ for document in data_2:
                     # Convert the segments to int32 data type
                     polygons = [np.array(segment, np.int32) for segment in segments]
 
-                    # Create a mask for the "NewCategory"
                     mold_mask = np.zeros((image_height, image_width), dtype=np.uint8)
                     cv2.fillPoly(
                         mold_mask, polygons, 255
                     )  # Assign white color for "NewCategory"
 
-                    # Add the "NewCategory" mask to the combined mask
                     combined_mask = cv2.add(combined_mask, mold_mask)
 
-    # Save the combined "NewCategory" mask image
+    # Save the combined mask image
     image_filename = os.path.splitext(document["documents"][0]["name"])[0]
     mask_filename = f"masks/{image_filename}.png"
     cv2.imwrite(mask_filename, combined_mask)
