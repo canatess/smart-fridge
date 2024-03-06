@@ -7,7 +7,7 @@ from PIL import Image
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
-
+import torchvision
 
 # Define the model architecture
 class conv_block(nn.Module):
@@ -93,12 +93,37 @@ class build_unet(nn.Module):
         outputs = self.outputs(d4)
         return outputs
 
+# Define the model
+class RegressionModel(nn.Module):
 
+    def __init__(self):
+
+        super(RegressionModel, self).__init__()
+        resnet = torchvision.models.resnet34()
+        self.features = nn.Sequential(
+            *list(resnet.children())[:-1]
+        )  # Remove the last fully connected layer
+        self.regressor = nn.Linear(
+            512, 1
+        )  # Replace the last layer with a regression layer
+
+    def forward(self, x):
+
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.regressor(x)
+        return x
+
+
+# Define the model
+model_reg = RegressionModel()
 # Load the pre-trained model
-model = build_unet()
+model_seg = build_unet()
 checkpoint = torch.load("mold_model_comb.pth")
-model.load_state_dict(checkpoint)
-model.eval()
+model_seg.load_state_dict(checkpoint)
+model_reg.load_state_dict(torch.load("regression_model.pth"))
+model_reg.eval()
+model_seg.eval()
 
 
 mean = [0.485, 0.456, 0.406]
@@ -121,7 +146,7 @@ def predict_image(image):
 
     # Perform prediction
     with torch.no_grad():
-        output = model(image_tensor)
+        output = model_seg(image_tensor)
 
     # Apply sigmoid activation and thresholding
     preds = torch.sigmoid(output)
@@ -139,16 +164,25 @@ def predict_image(image):
     masked_image[pred_indices] = cmap(preds[pred_indices])[:, :3]
 
     # Normalize the image array to be between -1 and 1
-
     return masked_image
+
+def regression(image):
+    img_numpy = test_transform(image=np.array(image))["image"]
+    image_tensor = img_numpy.unsqueeze(0)  # Add batch dimension
+
+    with torch.no_grad():
+        output = model_reg(image_tensor)
+    
+    print(output.shape)
+    return output.squeeze().tolist()
 
 
 # Create Gradio interface
 inputs = gr.Image(type="pil")  # Define input image shape
-outputs = gr.Image(type="numpy")  # Define output image
+outputs = gr.Textbox()  # Define output image
 
 app = gr.Interface(
-    fn=predict_image,
+    fn=regression,
     inputs=inputs,
     outputs=outputs,
     title="Image Segmentation",
@@ -156,4 +190,4 @@ app = gr.Interface(
 )
 
 # Launch the app
-app.launch()
+app.launch(share=True)
